@@ -1714,5 +1714,3 @@ mod tests {
         assert_eq!(socket.local_addr().unwrap().ip(), bind_addr);
     }
 }
-    }
-}
