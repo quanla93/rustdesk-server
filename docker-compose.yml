@@ -1,6 +1,7 @@
 networks:
   rustdesk-net:
     external: false
+
 services:
   rustdesk:
     ports:
@@ -11,19 +12,24 @@ services:
       - 21117:21117
       - 21118:21118
       - 21119:21119
-    image: lejianwen/rustdesk-server-s6:latest
+    # Build directly from source to ensure static compilation on LXC
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
     environment:
-      - RELAY=<relay_server[:port]>
+      # TODO: Replace '100.64.39.126' with your LXC container's IP address or Domain Name
+      - RELAY=100.64.39.126
       - ENCRYPTED_ONLY=1
       - MUST_LOGIN=N
       - TZ=Asia/Shanghai
-      - RUSTDESK_API_RUSTDESK_ID_SERVER=<id_server[:21116]>
-      - RUSTDESK_API_RUSTDESK_RELAY_SERVER=<relay_server[:21117]>
-      - RUSTDESK_API_RUSTDESK_API_SERVER=http://<api_server[:21114]>
+      - RUSTDESK_API_RUSTDESK_ID_SERVER=100.64.39.126:21116
+      - RUSTDESK_API_RUSTDESK_RELAY_SERVER=100.64.39.126:21117
+      - RUSTDESK_API_RUSTDESK_API_SERVER=http://100.64.39.126:21114
+      - RUSTDESK_API_RUSTDESK_KEY=d16NpSSrNVneqJ2DqM1maPVGhYXeNokfm3ybJlicfro=
     volumes:
-      - /data/rustdesk/server:/data
-      - /data/rustdesk/api:/app/data #将数据库挂载
-      - /data/rustdesk/server:/app/conf/data #挂载key文件到api容器，可以不用使用 RUSTDESK_API_RUSTDESK_KEY
+      - ./data/server:/data
+      - ./data/api:/app/data
+      - ./data/server:/app/conf/data
     networks:
       - rustdesk-net
     restart: unless-stopped

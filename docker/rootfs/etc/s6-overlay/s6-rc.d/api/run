@@ -1,4 +1,6 @@
 #!/command/with-contenv sh
 sleep 3
+# Fix mismatch webclient2 URL in frontend JS
+find /app/resources/admin/static/ -name "peer-*.js" -exec sed -i 's/webclient2/webclient/g' {} + 2>/dev/null || true
 cd /app
 ./apimain
