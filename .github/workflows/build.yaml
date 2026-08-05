@@ -14,6 +14,8 @@ permissions:
 on:
   workflow_dispatch:
   push:
+    branches:
+      - forapi
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
@@ -23,8 +25,8 @@ on:
 env:
   CARGO_TERM_COLOR: always
   LATEST_TAG: latest
-  GHCR_IMAGE: ghcr.io/rustdesk/rustdesk-server-s6
-  GHCR_IMAGE_CLASSIC: ghcr.io/rustdesk/rustdesk-server
+  GHCR_IMAGE: ghcr.io/quanla93/rustdesk-server-s6
+  GHCR_IMAGE_CLASSIC: ghcr.io/quanla93/rustdesk-server
   
 jobs:
 
@@ -262,7 +264,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: rustdesk
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Extract metadata (tags, labels) for Docker
@@ -326,7 +328,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: rustdesk
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # manifest for :1.2.3 tag
@@ -430,7 +432,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: rustdesk
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Extract metadata (tags, labels) for Docker
@@ -492,7 +494,7 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: rustdesk
+          username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # manifest for :1.2.3 tag
