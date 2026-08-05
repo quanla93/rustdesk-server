@@ -49,6 +49,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install OpenSSL development packages
+        run: |
+          sudo apt update
+          DEBIAN_FRONTEND=noninteractive sudo apt install -y pkg-config libssl-dev
+
       - name: Install toolchain
         uses: actions-rs/toolchain@v1
         with:
