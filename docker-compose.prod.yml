@@ -12,19 +12,18 @@ services:
       - 21117:21117
       - 21118:21118
       - 21119:21119
-    # Build directly from source to ensure static compilation on LXC
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    # Pull directly from GitHub Container Registry (GHCR)
+    image: ghcr.io/quanla93/rustdesk-server-s6:latest
     environment:
-      # TODO: Replace '100.64.39.126' with your LXC container's IP address or Domain Name
-      - RELAY=100.64.39.126
+      # TODO: Replace '192.168.101.1xx' with your LXC container's LAN IP address or Tailscale IP
+      - RELAY=192.168.101.1xx
       - ENCRYPTED_ONLY=1
       - MUST_LOGIN=N
       - TZ=Asia/Shanghai
-      - RUSTDESK_API_RUSTDESK_ID_SERVER=100.64.39.126:21116
-      - RUSTDESK_API_RUSTDESK_RELAY_SERVER=100.64.39.126:21117
-      - RUSTDESK_API_RUSTDESK_API_SERVER=http://100.64.39.126:21114
+      - RUSTDESK_API_RUSTDESK_ID_SERVER=192.168.101.1xx:21116
+      - RUSTDESK_API_RUSTDESK_RELAY_SERVER=192.168.101.1xx:21117
+      - RUSTDESK_API_RUSTDESK_API_SERVER=http://192.168.101.1xx:21114
+      # TODO: Update with your generated secure key (from ./data/server/id_ed25519.pub after first startup)
       - RUSTDESK_API_RUSTDESK_KEY=d16NpSSrNVneqJ2DqM1maPVGhYXeNokfm3ybJlicfro=
     volumes:
       - ./data/server:/data
