@@ -3,33 +3,35 @@ networks:
     external: false
 
 services:
-  rustdesk:
+  rustdesk-server:
+    image: ${RUSTDESK_IMAGE:-ghcr.io/quanla93/rustdesk-server-s6:latest}
+    container_name: ${CONTAINER_NAME:-rustdesk-server}
+    restart: unless-stopped
+
     ports:
-      - 21114:21114
-      - 21115:21115
-      - 21116:21116
-      - 21116:21116/udp
-      - 21117:21117
-      - 21118:21118
-      - 21119:21119
-    # Build directly from source to ensure static compilation on LXC
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+      - "${RUSTDESK_API_PORT:-21114}:21114"
+      - "${RUSTDESK_NAT_PORT:-21115}:21115"
+      - "${RUSTDESK_ID_PORT:-21116}:21116"
+      - "${RUSTDESK_ID_PORT:-21116}:21116/udp"
+      - "${RUSTDESK_RELAY_PORT:-21117}:21117"
+      - "${RUSTDESK_WS_ID_PORT:-21118}:21118"
+      - "${RUSTDESK_WS_RELAY_PORT:-21119}:21119"
+
     environment:
-      # TODO: Replace '100.64.39.126' with your LXC container's IP address or Domain Name
-      - RELAY=100.64.39.126
-      - ENCRYPTED_ONLY=1
-      - MUST_LOGIN=N
-      - TZ=Asia/Shanghai
-      - RUSTDESK_API_RUSTDESK_ID_SERVER=100.64.39.126:21116
-      - RUSTDESK_API_RUSTDESK_RELAY_SERVER=100.64.39.126:21117
-      - RUSTDESK_API_RUSTDESK_API_SERVER=http://100.64.39.126:21114
-      - RUSTDESK_API_RUSTDESK_KEY=d16NpSSrNVneqJ2DqM1maPVGhYXeNokfm3ybJlicfro=
+      RELAY: ${RUSTDESK_RELAY:-192.168.101.113}
+      ENCRYPTED_ONLY: ${ENCRYPTED_ONLY:-1}
+      MUST_LOGIN: ${MUST_LOGIN:-N}
+      TZ: ${TZ:-Asia/Ho_Chi_Minh}
+
+      RUSTDESK_API_RUSTDESK_ID_SERVER: ${RUSTDESK_ID_SERVER:-192.168.101.113:21116}
+      RUSTDESK_API_RUSTDESK_RELAY_SERVER: ${RUSTDESK_RELAY_SERVER:-192.168.101.113:21117}
+      RUSTDESK_API_RUSTDESK_API_SERVER: ${RUSTDESK_API_SERVER:-http://192.168.101.113:21114}
+      RUSTDESK_API_RUSTDESK_KEY: ${RUSTDESK_KEY:-}
+
     volumes:
-      - ./data/server:/data
-      - ./data/api:/app/data
-      - ./data/server:/app/conf/data
+      - ${RUSTDESK_DATA_DIR:-/opt/rustdesk-server}/data/server:/data
+      - ${RUSTDESK_DATA_DIR:-/opt/rustdesk-server}/data/api:/app/data
+      - ${RUSTDESK_DATA_DIR:-/opt/rustdesk-server}/data/server:/app/conf/data
+
     networks:
       - rustdesk-net
-    restart: unless-stopped
