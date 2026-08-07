@@ -73,6 +73,92 @@ services:
 
 For more API details, see [RustDesk API](https://github.com/lejianwen/rustdesk-api).
 
+## Authentik / OIDC login setup
+
+This fork can use Authentik through the bundled RustDesk API service. Authentik is configured as a generic OIDC provider in the RustDesk API web console, while `hbbs` validates client login tokens with `RUSTDESK_API_JWT_KEY` when `MUST_LOGIN=Y`.
+
+Recommended public endpoints:
+
+| Endpoint | Purpose |
+| --- | --- |
+| `rustdesk.example.com` | RustDesk ID/relay host used by clients |
+| `https://rustdesk-api.example.com` | RustDesk API web console and client API server |
+| `https://auth.example.com` | Authentik |
+
+### 1. Configure the RustDesk server
+
+Set these environment variables for the S6 all-in-one container:
+
+```env
+MUST_LOGIN=Y
+RUSTDESK_API_JWT_KEY=<long-random-secret>
+RUSTDESK_API_RUSTDESK_ID_SERVER=rustdesk.example.com:21116
+RUSTDESK_API_RUSTDESK_RELAY_SERVER=rustdesk.example.com:21117
+RUSTDESK_API_RUSTDESK_API_SERVER=https://rustdesk-api.example.com
+```
+
+Generate a JWT key with:
+
+```bash
+openssl rand -base64 48
+```
+
+The same `RUSTDESK_API_JWT_KEY` must be used by the API service and `hbbs`; otherwise clients can log in but the ID server rejects their tokens.
+
+### 2. Create an Authentik OAuth2/OIDC provider
+
+In Authentik, create an **OAuth2/OpenID Provider** for RustDesk API:
+
+| Field | Value |
+| --- | --- |
+| Client type | `Confidential` |
+| Redirect URI | `https://rustdesk-api.example.com/api/oidc/callback` |
+| Scopes | `openid profile email` |
+| Issuer | Usually `https://auth.example.com/application/o/<provider-slug>/` |
+
+Create an Authentik application that uses this provider and assign the users or groups that may log in to RustDesk.
+
+### 3. Configure OIDC in RustDesk API
+
+Open the RustDesk API web console at `https://rustdesk-api.example.com`, then add an OIDC login provider:
+
+| Field | Value |
+| --- | --- |
+| Type | `OIDC` |
+| Name | `Authentik` |
+| Issuer | Authentik issuer URL, for example `https://auth.example.com/application/o/rustdesk-api/` |
+| Client ID | Client ID from Authentik |
+| Client Secret | Client secret from Authentik |
+| Scopes | `openid profile email` |
+
+The OIDC userinfo or ID token must include these claims:
+
+- `sub`
+- `email`
+- `preferred_username`
+
+If Authentik does not return `preferred_username`, add an Authentik scope/property mapping that returns the current user's username as `preferred_username`.
+
+### 4. Configure RustDesk clients
+
+In the RustDesk client network settings, set:
+
+| Client setting | Value |
+| --- | --- |
+| ID server | `rustdesk.example.com` |
+| Relay server | `rustdesk.example.com` or `rustdesk.example.com:21117` |
+| API server | `https://rustdesk-api.example.com` |
+| Key | The server public key, if encrypted/key enforcement is enabled |
+
+With `MUST_LOGIN=Y`, clients must log in through the API server before they can connect.
+
+### Troubleshooting
+
+- `redirect_uri mismatch`: the Authentik redirect URI must exactly match `https://rustdesk-api.example.com/api/oidc/callback`.
+- Login succeeds but clients cannot connect: verify `MUST_LOGIN=Y` and that `RUSTDESK_API_JWT_KEY` is identical for API token signing and `hbbs` validation.
+- OIDC claim errors: make sure Authentik returns `sub`, `email`, and `preferred_username`.
+- Client cannot open the login page: ensure `RUSTDESK_API_RUSTDESK_API_SERVER` is the public URL reachable from the client, not only an internal Docker URL.
+
 ---
 
 <p align="center">
