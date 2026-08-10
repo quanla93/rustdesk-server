@@ -1,4 +1,4 @@
-FROM lejianwen/rustdesk-api:latest
+FROM ghcr.io/quanla93/rustdesk-api:latest
 
 ARG S6_OVERLAY_VERSION=3.2.0.0
 ARG S6_ARCH=x86_64
