@@ -122,7 +122,8 @@ jobs:
 
             ### Web/API image refresh
             - Rebuild the RustDesk server images with `${{ env.RUSTDESK_API_IMAGE }}`.
-            - This release was triggered by `${{ github.event.client_payload.source_repo || github.repository }}` at `${{ github.event.client_payload.api_ref || github.ref_name }}`.
+            - Triggered by `${{ github.event.client_payload.source_repo || github.repository }}` at `${{ github.event.client_payload.api_ref || github.ref_name }}`.
+            - Update info: ${{ github.event.client_payload.commit_msg || 'Version update' }}
 
             ### Upgrade Notes
             - Pull and recreate the S6/all-in-one container to receive the updated bundled API/web assets.
