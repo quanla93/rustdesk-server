@@ -8,6 +8,8 @@ permissions:
   packages: write
 
 on:
+  repository_dispatch:
+    types: [rustdesk-api-updated]
   workflow_dispatch:
   push:
     branches:
@@ -24,7 +26,8 @@ env:
   MAJOR_TAG: 2
   GHCR_IMAGE: ghcr.io/quanla93/rustdesk-server-s6
   GHCR_IMAGE_CLASSIC: ghcr.io/quanla93/rustdesk-server
-  
+  RUSTDESK_API_IMAGE: ${{ github.event.client_payload.api_image || 'ghcr.io/quanla93/rustdesk-api:latest' }}
+
 jobs:
 
   # binary build
@@ -167,9 +170,11 @@ jobs:
           context: "./docker"
           platforms: ${{ matrix.job.docker_platform }}
           push: true
+          pull: true
           provenance: false
           build-args: |
             S6_ARCH=${{ matrix.job.s6_platform }}
+            RUSTDESK_API_IMAGE=${{ env.RUSTDESK_API_IMAGE }}
           tags: |
             ${{ env.GHCR_IMAGE }}:${{ env.LATEST_TAG }}-${{ matrix.job.name }}
             ${{ env.GHCR_IMAGE }}:${{ github.ref_name }}-${{ matrix.job.name }}
