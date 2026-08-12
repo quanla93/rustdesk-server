@@ -26,7 +26,7 @@ env:
   MAJOR_TAG: 2
   GHCR_IMAGE: ghcr.io/quanla93/rustdesk-server-s6
   GHCR_IMAGE_CLASSIC: ghcr.io/quanla93/rustdesk-server
-  RUSTDESK_API_IMAGE: ${{ github.event.client_payload.api_image || 'ghcr.io/quanla93/rustdesk-api:latest' }}
+  RUSTDESK_API_IMAGE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.api_image || 'ghcr.io/quanla93/rustdesk-api:latest' }}
   SERVER_IMAGE_TAG: ${{ github.event_name == 'repository_dispatch' && startsWith(github.event.client_payload.api_ref, 'v') && format('rustdesk-api-{0}', github.event.client_payload.api_ref) || github.ref_name }}
   IS_API_TAG_DISPATCH: ${{ github.event_name == 'repository_dispatch' && startsWith(github.event.client_payload.api_ref, 'v') }}
 
