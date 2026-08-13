@@ -8,9 +8,10 @@ permissions:
   packages: write
 
 on:
-  repository_dispatch:
-    types: [rustdesk-api-updated]
   workflow_dispatch:
+  pull_request:
+    branches:
+      - forapi
   push:
     branches:
       - forapi
@@ -133,6 +134,7 @@ jobs:
 
     name: Docker push - ${{ matrix.job.name }}
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -244,6 +246,7 @@ jobs:
 
     name: Docker push - ${{ matrix.job.name }}
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
