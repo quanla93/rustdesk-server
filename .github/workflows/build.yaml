@@ -8,8 +8,6 @@ permissions:
   packages: write
 
 on:
-  repository_dispatch:
-    types: [rustdesk-api-updated]
   workflow_dispatch:
   push:
     branches:
