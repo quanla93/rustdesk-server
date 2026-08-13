@@ -134,6 +134,7 @@ jobs:
 
     name: Docker push - ${{ matrix.job.name }}
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -245,6 +246,7 @@ jobs:
 
     name: Docker push - ${{ matrix.job.name }}
     needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
