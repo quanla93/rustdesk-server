@@ -720,14 +720,18 @@ impl RendezvousServer {
                     }
                     log::trace!("KeyExchange their_pk: {:?}", hex::encode(&ex.keys[0]));
                     log::trace!("KeyExchange box: {:?}", hex::encode(&ex.keys[1]));
-                    let their_pk: [u8; 32] = ex.keys[0].to_vec().try_into().unwrap();
-                    let cryptobox: [u8; 48] = ex.keys[1].to_vec().try_into().unwrap();
-                    let symetric_key = get_symetric_key_from_msg(
+                    let Some((their_pk, cryptobox)) = key_exchange_parts(&ex.keys) else {
+                        log::error!("Handshake failed: invalid key length");
+                        return false;
+                    };
+                    let Some(symetric_key) = get_symetric_key_from_msg(
                         self.inner.secure_tcp_sk_b.0,
                         their_pk,
                         &cryptobox,
-                    );
-                    log::debug!("KeyExchange symetric key: {:?}", hex::encode(&symetric_key));
+                    ) else {
+                        log::error!("Handshake failed: cannot open key exchange box");
+                        return false;
+                    };
                     let key = secretbox::Key::from_slice(&symetric_key);
                     match key {
                         Some(key) => {
@@ -1768,24 +1772,68 @@ fn get_symetric_key_from_msg(
     our_sk_b: [u8; 32],
     their_pk_b: [u8; 32],
     sealed_value: &[u8; 48],
-) -> [u8; 32] {
+) -> Option<[u8; 32]> {
     let their_pk_b = box_::PublicKey(their_pk_b);
     let nonce = box_::Nonce([0u8; box_::NONCEBYTES]);
     let sk = box_::SecretKey(our_sk_b);
-    let key = box_::open(sealed_value, &nonce, &their_pk_b, &sk);
-    match key {
-        Ok(key) => {
-            let mut key_array = [0u8; 32];
-            key_array.copy_from_slice(&key);
-            key_array
-        }
-        Err(e) => panic!("Error while opening the seal key{:?}", e),
+    match box_::open(sealed_value, &nonce, &their_pk_b, &sk) {
+        Ok(key) => key.try_into().ok(),
+        Err(_) => None,
     }
+}
+
+fn key_exchange_parts(keys: &[Bytes]) -> Option<([u8; 32], [u8; 48])> {
+    let their_pk = keys.first()?.as_ref().try_into().ok()?;
+    let cryptobox = keys.get(1)?.as_ref().try_into().ok()?;
+    Some((their_pk, cryptobox))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn symetric_key_garbage_box_returns_none() {
+        let (_, sk) = box_::gen_keypair();
+        let (pk, _) = box_::gen_keypair();
+        assert_eq!(get_symetric_key_from_msg(sk.0, pk.0, &[7u8; 48]), None);
+    }
+
+    #[test]
+    fn symetric_key_round_trip() {
+        let (our_pk, our_sk) = box_::gen_keypair();
+        let (their_pk, their_sk) = box_::gen_keypair();
+        let nonce = box_::Nonce([0u8; box_::NONCEBYTES]);
+        let key = [42u8; 32];
+        let sealed = box_::seal(&key, &nonce, &our_pk, &their_sk);
+        let sealed: [u8; 48] = sealed.try_into().unwrap();
+        assert_eq!(
+            get_symetric_key_from_msg(our_sk.0, their_pk.0, &sealed),
+            Some(key)
+        );
+    }
+
+    #[test]
+    fn symetric_key_wrong_plaintext_length_returns_none() {
+        let (our_pk, our_sk) = box_::gen_keypair();
+        let (their_pk, their_sk) = box_::gen_keypair();
+        let nonce = box_::Nonce([0u8; box_::NONCEBYTES]);
+        let sealed = box_::seal(&[1u8; 16], &nonce, &our_pk, &their_sk);
+        let sealed: [u8; 32] = sealed.try_into().unwrap();
+        let mut padded = [0u8; 48];
+        padded[..32].copy_from_slice(&sealed);
+        assert_eq!(get_symetric_key_from_msg(our_sk.0, their_pk.0, &padded), None);
+    }
+
+    #[test]
+    fn key_exchange_parts_validates_lengths() {
+        let b = |n: usize| Bytes::from(vec![0u8; n]);
+        assert!(key_exchange_parts(&[b(32), b(48)]).is_some());
+        assert!(key_exchange_parts(&[b(31), b(48)]).is_none());
+        assert!(key_exchange_parts(&[b(32), b(47)]).is_none());
+        assert!(key_exchange_parts(&[b(32)]).is_none());
+        assert!(key_exchange_parts(&[]).is_none());
+    }
 
     #[test]
     fn max_message_kb_falls_back_to_default_and_is_capped() {
