@@ -176,9 +176,18 @@ With `MUST_LOGIN=Y`, clients must log in through the API server before they can 
 
 [**Self-hosting manual**](https://rustdesk.com/docs/en/self-host/)
 
+[**Configuration & environment variables**](docs/environment-variables.md)
+
 [**FAQ**](https://github.com/rustdesk/rustdesk/wiki/FAQ)
 
-Self-host your own RustDesk server. It is free and open source.
+[**How to migrate OSS to Pro**](https://rustdesk.com/docs/en/self-host/rustdesk-server-pro/installscript/#convert-from-open-source)
+
+Self-host your own RustDesk server, it is free and open source.
+
+> [!IMPORTANT]
+> **Need more features?** [RustDesk Server Pro](https://rustdesk.com/pricing.html) might suit you better.
+>
+> **Want to develop your own server?** Start with [rustdesk-server-demo](https://github.com/rustdesk/rustdesk-server-demo), a simpler starting point than this repository.
 
 ## How to build manually
 
@@ -194,9 +203,27 @@ After the build completes, three executables are generated in `target/release`:
 
 Updated binaries are available on the [Releases](https://github.com/quanla93/rustdesk-server/releases) page.
 
-If you need extra features, [RustDesk Server Pro](https://rustdesk.com/pricing.html) may be a better fit.
+## Configuration
 
-If you want to develop your own server, [rustdesk-server-demo](https://github.com/rustdesk/rustdesk-server-demo) is usually a simpler starting point than this repository.
+`hbbs` and `hbbr` can be configured with command-line flags, environment
+variables, or an `.env` / config file. Run `hbbs --help` or `hbbr --help` to see
+the available flags.
+
+The most common options:
+
+| Option | Flag | Env var | Applies to | Purpose |
+| --- | --- | --- | --- | --- |
+| Key | `-k` | `KEY` | hbbs, hbbr | `hbbs` loads/generates one by default |
+| Bind address | `-b` | `BIND` | hbbs, hbbr | Local IP address to listen on (default: all interfaces; requires 1.1.17+) |
+| Port | `-p` | `PORT` | hbbs, hbbr | Listening port (hbbs `21116`, hbbr `21117`) |
+| Relay servers | `-r` | `RELAY-SERVERS` | hbbs | Override when the relay uses a different address or a non-standard port |
+| Force relay | — | `ALWAYS_USE_RELAY` | hbbs | `Y` disables direct connections |
+| Must login | — | `MUST_LOGIN` | hbbs | Fork: `Y` requires API login before connecting |
+| Log level | — | `RUST_LOG` | hbbs, hbbr | e.g. `debug` (default `info`) |
+
+See **[docs/environment-variables.md](docs/environment-variables.md)** for the
+full list of variables, the file/flag/env precedence rules, database and relay
+bandwidth tuning, Docker image variables, and examples.
 
 ## Docker images
 
@@ -511,5 +538,6 @@ Supported distributions:
 | `RUST_LOG` | all | Debug level: `error`, `warn`, `info`, `debug`, or `trace` |
 | `SINGLE_BANDWIDTH` | `hbbr` | Maximum bandwidth for one connection, in Mb/s |
 | `TOTAL_BANDWIDTH` | `hbbr` | Maximum total bandwidth, in Mb/s |
+| `BIND` | `hbbs`/`hbbr` | Local IP address to listen on (requires 1.1.17+) |
 | `MUST_LOGIN` | `hbbs` | If set to `Y`, clients must log in before connecting |
 | `RUSTDESK_API_JWT_KEY` | `hbbs` | JWT secret used to validate API login tokens |

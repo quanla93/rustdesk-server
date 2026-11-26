@@ -39,7 +39,7 @@ in the inherited process environment.
 | Variable | CLI flag | Default | Description |
 |---|---|---|---|
 | `KEY` | `-k`, `--key` | `-` | Public key clients must use, a base64 secret key, or `-` / `_` to load or generate a key pair (`id_ed25519`, `id_ed25519.pub`). `-` and `_` have the same behavior, so explicitly passing `-k _` to `hbbs` is unnecessary. An explicitly empty value disables key validation; see [Keys](#keys-and-encryption). |
-| `BIND` | `-b`, `--bind` | all interfaces | **Available since 1.1.16.** Local IPv4 or IPv6 address on which all `hbbs` TCP, UDP, and WebSocket listeners bind. This does not change the addresses advertised to clients. Supported by `--config`, `.env`, and the inherited environment. |
+| `BIND` | `-b`, `--bind` | all interfaces | **Available since 1.1.17.** Local IPv4 or IPv6 address on which all `hbbs` TCP, UDP, and WebSocket listeners bind. This does not change the addresses advertised to clients. Supported by `--config`, `.env`, and the inherited environment. |
 | `PORT` | `-p`, `--port` | `21116` | Main TCP/UDP listening port. `hbbs` also binds `PORT-1` (NAT type test) and `PORT+2` (WebSocket). |
 | `RELAY-SERVERS` | `-r`, `--relay-servers` | *(empty)* | Optional relay server override handed to clients, as comma-separated `host` or `host:port` values. Leave empty when `hbbr` uses the same address as `hbbs` and the standard port `21117`; clients derive it automatically. Set this only when the relay uses a different IP/hostname or a non-standard port. |
 | `RMEM` | `-M`, `--rmem` | `0` (system default) | UDP receive‑buffer size in bytes. Raise the OS limit first: `sudo sysctl -w net.core.rmem_max=52428800`. |
@@ -48,6 +48,10 @@ in the inherited process environment.
 | `ALWAYS_USE_RELAY` 🅴 | *(none)* | `N` | `Y` forces every session through a relay (disables direct/hole‑punched connections). At runtime, send `always-use-relay Y` or `always-use-relay N` to the `hbbs` [loopback console](#runtime-console). |
 | `DB_URL` 🅴 | *(none)* | `./db_v2.sqlite3` | Path/URL of the SQLite database file. See [Database](#database). |
 | `MAX_DATABASE_CONNECTIONS` 🅴 | *(none)* | `1` | Size of the SQLite connection pool. |
+| `MUST_LOGIN` | `--must-login` | `N` | **Fork only.** `Y` requires clients to carry a valid API login token before they can connect. At runtime, send `must-login Y` or `must-login N` to the `hbbs` [loopback console](#runtime-console). |
+| `RUSTDESK_API_JWT_KEY` 🅴 | *(none)* | *(empty)* | **Fork only.** JWT secret used to validate client tokens issued by the companion rustdesk-api server. |
+| `MAX_PUNCH_REQUESTS` 🅴 | *(none)* | `100000` | Number of punch-request records kept in memory for the `punch-requests` [console](#runtime-console) command; the oldest is dropped when full. `0` disables recording. |
+| `MAX_MESSAGE_KB` 🅴 | *(none)* | `64` | Largest message, in KiB, that `hbbs` accepts on its TCP and WebSocket listeners; a connection that sends a bigger one is dropped. Capped at `65536`. The default fits an online-status query for about 5000 standard 9–10 digit IDs, fewer with long custom IDs; a client whose query is too big shows no online status. |
 
 🅴 = set through the inherited process environment.
 
@@ -61,7 +65,7 @@ in the inherited process environment.
 | Variable | CLI flag | Default | Description |
 |---|---|---|---|
 | `KEY` | `-k`, `--key` | *(empty)* | The empty default intentionally disables relay key validation, avoiding key-pair setup and mismatch failures. To enable relay key validation, use the same non-empty key as `hbbs`; `-` / `_` have the same behavior and load or generate a key pair. An empty key allows clients without a matching key to use the relay, so choose this tradeoff deliberately on an exposed server. |
-| `BIND` | `-b`, `--bind` | all interfaces | **Available since 1.1.16.** Local IPv4 or IPv6 address on which the relay TCP and WebSocket listeners bind. Supported by `.env` and the inherited environment; `hbbr` does not support `--config`. |
+| `BIND` | `-b`, `--bind` | all interfaces | **Available since 1.1.17.** Local IPv4 or IPv6 address on which the relay TCP and WebSocket listeners bind. Supported by `.env` and the inherited environment; `hbbr` does not support `--config`. |
 | `PORT` | `-p`, `--port` | `21117` | Relay listening port. `hbbr` also binds `PORT+2` for WebSocket relay. **Note:** when set via the `PORT` env var (not `-p`), `hbbr` listens on `PORT + 1`, so a shared `PORT=21116` makes `hbbs`=21116 and `hbbr`=21117. |
 
 ### Relay bandwidth / QoS
